@@ -1,15 +1,18 @@
 <?php
 
+// Connect to the database
 require_once "../config/database.php";
 
-// Check if product ID is provided
+$message = "";
+
+// Check if a Product ID is provided in the URL
 if (!isset($_GET["id"])) {
     die("Product not found.");
 }
 
 $productID = $_GET["id"];
 
-// Get product information
+// Get the selected product information
 $sql = "SELECT * FROM products WHERE product_id = ?";
 $stmt = $conn->prepare($sql);
 $stmt->bind_param("i", $productID);
@@ -17,23 +20,30 @@ $stmt->execute();
 
 $result = $stmt->get_result();
 
+// Check if the product exists
 if ($result->num_rows == 0) {
     die("Product not found.");
 }
 
 $row = $result->fetch_assoc();
 
-// Delete product after confirmation
+// Delete the product after confirmation
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
+    // Prepare SQL statement to delete the selected product
     $sql = "DELETE FROM products WHERE product_id = ?";
     $stmt = $conn->prepare($sql);
     $stmt->bind_param("i", $productID);
 
+    // Execute the DELETE statement
     if ($stmt->execute()) {
+
+        // Redirect to Product List after successful deletion
         header("Location: view_product.php?deleted=1");
         exit();
+
     } else {
+
         $message = "Failed to delete product.";
     }
 }
@@ -42,6 +52,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
 <!DOCTYPE html>
 <html>
+
 <head>
     <title>Delete Product</title>
     <link rel="stylesheet" href="../css/style.css">
@@ -51,9 +62,19 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
 <h2>Delete Product</h2>
 
+<!-- Display error message if deletion fails -->
+<?php if ($message != ""): ?>
+
+    <p class="error-message">
+        <strong><?php echo $message; ?></strong>
+    </p>
+
+<?php endif; ?>
+
 <p>Are you sure you want to delete the following product?</p>
 
-<table border="1" cellpadding="10">
+<!-- Display complete product information before deletion -->
+<table>
 
     <tr>
         <th>Product ID</th>
@@ -81,18 +102,21 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     </tr>
 
     <tr>
-    <th>Quantity</th>
-    <td><?php echo $row["quantity"]; ?></td>
-</tr>
+        <th>Quantity</th>
+        <td><?php echo $row["quantity"]; ?></td>
+    </tr>
 
 </table>
 
 <br>
 
+<!-- Delete confirmation form -->
 <form method="POST">
+
     <button type="submit">Yes, Delete Product</button>
 
     <a href="view_product.php">Cancel</a>
+
 </form>
 
 </body>

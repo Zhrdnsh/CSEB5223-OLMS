@@ -1,18 +1,19 @@
 <?php
 
+// Connect to the database and include the Product class
 require_once "../config/database.php";
 require_once "../classes/Product.php";
 
 $message = "";
 
-// Check if product ID is provided
+// Check if a Product ID is provided in the URL
 if (!isset($_GET["id"])) {
     die("Product not found.");
 }
 
 $productID = $_GET["id"];
 
-// Get existing product data
+// Get the existing product data
 $sql = "SELECT * FROM products WHERE product_id = ?";
 $stmt = $conn->prepare($sql);
 $stmt->bind_param("i", $productID);
@@ -20,59 +21,103 @@ $stmt->execute();
 
 $result = $stmt->get_result();
 
+// Check if the product exists
 if ($result->num_rows == 0) {
     die("Product not found.");
 }
 
 $row = $result->fetch_assoc();
 
-// Update product
+// Check if the Update Product form has been submitted
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
-    $product = new Product();
+    // Get and clean input values from the form
+    $name = trim($_POST["name"]);
+    $description = trim($_POST["description"]);
+    $price = $_POST["price"];
+    $expiryDate = $_POST["expiry_date"];
+    $quantity = $_POST["quantity"];
 
-    $product->setProductID($productID);
-    $product->setName($_POST["name"]);
-    $product->setDescription($_POST["description"]);
-    $product->setPrice($_POST["price"]);
-    $product->setExpiryDate($_POST["expiry_date"]);
-    $product->setQuantity($_POST["quantity"]);
+    // Validate required fields
+    if ($name == "" || $description == "" || $expiryDate == "") {
 
-    $name = $product->getName();
-    $description = $product->getDescription();
-    $price = $product->getPrice();
-    $expiryDate = $product->getExpiryDate();
-    $quantity = $product->getQuantity();
+        $message = "Please fill in all fields.";
 
-    $sql = "UPDATE products
-            SET name = ?, description = ?, price = ?, expiry_date = ?, quantity = ?
-            WHERE product_id = ?";
+    // Prevent past expiry dates
+    } elseif ($expiryDate < date("Y-m-d")) {
 
-    $stmt = $conn->prepare($sql);
-    $stmt->bind_param(
-        "ssdsii",
-        $name,
-        $description,
-        $price,
-        $expiryDate,
-        $quantity,
-        $productID
-    );
+        $message = "Expiry date cannot be in the past.";
 
-    if ($stmt->execute()) {
-        $message = "Product updated successfully!";
+    // Validate product price
+    } elseif (!is_numeric($price) || $price < 0) {
 
-        // Get updated product data
-        $sql = "SELECT * FROM products WHERE product_id = ?";
-        $stmt = $conn->prepare($sql);
-        $stmt->bind_param("i", $productID);
-        $stmt->execute();
+        $message = "Price must be a valid positive value.";
 
-        $result = $stmt->get_result();
-        $row = $result->fetch_assoc();
+    // Validate product quantity
+    } elseif (!is_numeric($quantity) || $quantity < 0) {
+
+        $message = "Quantity cannot be negative.";
 
     } else {
-        $message = "Failed to update product.";
+
+        // Create a Product object
+        $product = new Product();
+
+        // Set the updated product information
+        $product->setProductID($productID);
+        $product->setName($name);
+        $product->setDescription($description);
+        $product->setPrice($price);
+        $product->setExpiryDate($expiryDate);
+        $product->setQuantity($quantity);
+
+        // Get the updated information from the Product object
+        $name = $product->getName();
+        $description = $product->getDescription();
+        $price = $product->getPrice();
+        $expiryDate = $product->getExpiryDate();
+        $quantity = $product->getQuantity();
+
+        // Prepare SQL statement to update the product
+        $sql = "UPDATE products
+                SET name = ?, 
+                    description = ?, 
+                    price = ?, 
+                    expiry_date = ?, 
+                    quantity = ?
+                WHERE product_id = ?";
+
+        $stmt = $conn->prepare($sql);
+
+        // Bind updated product values to the SQL statement
+        $stmt->bind_param(
+            "ssdsii",
+            $name,
+            $description,
+            $price,
+            $expiryDate,
+            $quantity,
+            $productID
+        );
+
+        // Execute the UPDATE statement
+        if ($stmt->execute()) {
+
+            $message = "Product updated successfully!";
+
+            // Get the updated product data to display in the form
+            $sql = "SELECT * FROM products WHERE product_id = ?";
+            $stmt = $conn->prepare($sql);
+            $stmt->bind_param("i", $productID);
+            $stmt->execute();
+
+            $result = $stmt->get_result();
+            $row = $result->fetch_assoc();
+
+        } else {
+
+            $message = "Failed to update product.";
+        }
     }
 }
 
@@ -80,6 +125,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
 <!DOCTYPE html>
 <html>
+
 <head>
     <title>Edit Product</title>
     <link rel="stylesheet" href="../css/style.css">
@@ -89,10 +135,26 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
 <h2>Edit Product</h2>
 
+<!-- Display success or error message -->
 <?php if ($message != ""): ?>
-    <p><strong><?php echo $message; ?></strong></p>
+
+    <?php if ($message == "Product updated successfully!"): ?>
+
+        <p class="success-message">
+            <?php echo $message; ?>
+        </p>
+
+    <?php else: ?>
+
+        <p class="error-message">
+            <?php echo $message; ?>
+        </p>
+
+    <?php endif; ?>
+
 <?php endif; ?>
 
+<!-- Edit Product form -->
 <form method="POST">
 
     <label>Product ID:</label><br>
@@ -134,20 +196,21 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     <input
         type="date"
         name="expiry_date"
+        min="<?php echo date('Y-m-d'); ?>"
         value="<?php echo $row["expiry_date"]; ?>"
         required
     >
     <br><br>
 
     <label>Quantity:</label><br>
-<input
-    type="number"
-    name="quantity"
-    min="0"
-    value="<?php echo $row["quantity"]; ?>"
-    required
->
-<br><br>
+    <input
+        type="number"
+        name="quantity"
+        min="0"
+        value="<?php echo $row["quantity"]; ?>"
+        required
+    >
+    <br><br>
 
     <button type="submit">Update Product</button>
 

@@ -1,7 +1,9 @@
 <?php
 
+// Product class represents product information in the OLMS
 class Product
 {
+    // Product attributes
     private $productID;
     private $name;
     private $description;
@@ -9,7 +11,7 @@ class Product
     private $expiryDate;
     private $quantity;
 
-    // Product ID
+    // Get and set Product ID
     public function getProductID()
     {
         return $this->productID;
@@ -20,7 +22,7 @@ class Product
         $this->productID = $productID;
     }
 
-    // Product Name
+    // Get and set Product Name
     public function getName()
     {
         return $this->name;
@@ -31,7 +33,7 @@ class Product
         $this->name = $name;
     }
 
-    // Description
+    // Get and set Product Description
     public function getDescription()
     {
         return $this->description;
@@ -42,7 +44,7 @@ class Product
         $this->description = $description;
     }
 
-    // Price
+    // Get and set Product Price
     public function getPrice()
     {
         return $this->price;
@@ -53,7 +55,7 @@ class Product
         $this->price = $price;
     }
 
-    // Expiry Date
+    // Get and set Product Expiry Date
     public function getExpiryDate()
     {
         return $this->expiryDate;
@@ -64,15 +66,16 @@ class Product
         $this->expiryDate = $expiryDate;
     }
 
+    // Get and set Product Quantity
     public function getQuantity()
-{
-    return $this->quantity;
-}
+    {
+        return $this->quantity;
+    }
 
-public function setQuantity($quantity)
-{
-    $this->quantity = $quantity;
-}
+    public function setQuantity($quantity)
+    {
+        $this->quantity = $quantity;
+    }
 }
 
 ?>
