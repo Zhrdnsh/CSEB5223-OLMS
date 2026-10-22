@@ -1,6 +1,7 @@
 <?php
 
 // Connect to the database
+require_once "auth.php";
 require_once "../config/database.php";
 
 $message = "";
