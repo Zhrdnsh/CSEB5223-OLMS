@@ -1,6 +1,7 @@
 <?php
 
 // Connect to the database and include the Product class
+require_once "auth.php";
 require_once "../config/database.php";
 require_once "../classes/Product.php";
 
