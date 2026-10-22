@@ -1,6 +1,7 @@
 <?php
 
 // Connect to the database
+require_once "auth.php";
 require_once "../config/database.php";
 
 // Retrieve all products from the database in ascending Product ID order
