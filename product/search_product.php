@@ -49,6 +49,7 @@ if (isset($_GET["search"])) {
 
 <!-- Product Management navigation -->
 <nav>
+    <a href="admin_dashboard.php">Dashboard</a>
     <a href="add_product.php">Add Product</a>
     <a href="view_product.php">View Products</a>
 </nav>
