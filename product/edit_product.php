@@ -50,9 +50,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $message = "Expiry date cannot be in the past.";
 
     // Validate product price
-    } elseif (!is_numeric($price) || $price < 0) {
+} elseif (!is_numeric($price) || $price <= 0) {
 
-        $message = "Price must be a valid positive value.";
+    $message = "Price must be greater than RM0.00.";
 
     // Validate product quantity
     } elseif (!is_numeric($quantity) || $quantity < 0) {
@@ -183,14 +183,14 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     <br><br>
 
     <label>Price (RM):</label><br>
-    <input
-        type="number"
-        name="price"
-        step="0.01"
-        min="0"
-        value="<?php echo $row["price"]; ?>"
-        required
-    >
+<input
+    type="number"
+    name="price"
+    step="0.01"
+    min="0.01"
+    value="<?php echo $row["price"]; ?>"
+    required
+>
     <br><br>
 
     <label>Expiry Date:</label><br>

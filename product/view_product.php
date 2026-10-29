@@ -24,6 +24,7 @@ $result = $conn->query($sql);
 
 <!-- Product Management navigation -->
 <nav>
+    <a href="admin_dashboard.php">Dashboard</a>
     <a href="add_product.php">Add Product</a>
     <a href="search_product.php">Search Product</a>
 </nav>
