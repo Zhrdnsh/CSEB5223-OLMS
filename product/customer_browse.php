@@ -29,69 +29,162 @@ if ($keyword !== "") {
     <title>Browse Products - OLMS</title>
     <link rel="stylesheet" href="../css/style.css">
 
-    <style>
+
+<style>
+    body {
+        background: #fffaf5;
+        color: #554b47;
+        font-family: Arial, sans-serif;
+        margin: 0;
+        padding: 0;
+    }
+
+    .customer-container {
+        max-width: 1100px;
+        margin: 40px auto;
+        padding: 25px;
+    }
+
+    .customer-container h1 {
+        color: #76515d;
+        font-size: 36px;
+        margin-bottom: 10px;
+    }
+
+    .customer-container h2 {
+        color: #76515d;
+        margin-top: 35px;
+    }
+
+    .customer-container > p {
+        color: #806d70;
+    }
+
+    .customer-container nav {
+        background: #ffffff;
+        padding: 18px 22px;
+        border-radius: 12px;
+        margin-top: 25px;
+        margin-bottom: 30px;
+    }
+
+    .customer-container nav a {
+        color: #a56b7b;
+        font-weight: bold;
+        margin-right: 15px;
+    }
+
+    .customer-container nav a:hover {
+        color: #76515d;
+    }
+
+    .search-form {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        flex-wrap: wrap;
+        background: #fbe6ea;
+        padding: 25px;
+        border-radius: 15px;
+        margin: 25px 0;
+        max-width: none;
+    }
+
+    .search-form input {
+        flex: 1;
+        min-width: 200px;
+        padding: 13px;
+        border: 1px solid #e8c6ce;
+        border-radius: 10px;
+        margin: 0;
+    }
+
+    .search-form button {
+        background: #a5b99c;
+        color: white;
+        padding: 13px 25px;
+        border: none;
+        border-radius: 10px;
+        font-weight: bold;
+        cursor: pointer;
+    }
+
+    .search-form button:hover {
+        background: #829a78;
+    }
+
+    .search-form a {
+        color: #76515d;
+        font-weight: bold;
+    }
+
+    .product-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+        gap: 22px;
+        margin-top: 25px;
+    }
+
+    .product-card {
+        background: #ffffff;
+        border: 1px solid #f0e1e4;
+        border-radius: 18px;
+        padding: 25px;
+        box-shadow: 0 5px 18px rgba(100, 70, 80, 0.06);
+        transition: transform 0.2s ease;
+    }
+
+    .product-card:hover {
+        transform: translateY(-4px);
+    }
+
+    .product-card h3 {
+        color: #76515d;
+        margin-top: 0;
+    }
+
+    .product-price {
+        color: #ad687b;
+        font-size: 22px;
+        font-weight: bold;
+    }
+
+    .availability {
+        color: #718b68;
+        font-weight: bold;
+    }
+
+    .details-button {
+        display: inline-block;
+        margin-top: 15px;
+        padding: 12px 20px;
+        background: #fbe6ea;
+        color: #76515d;
+        border-radius: 10px;
+        font-weight: bold;
+        text-decoration: none;
+    }
+
+    .details-button:hover {
+        background: #f2cbd5;
+    }
+
+    @media (max-width: 600px) {
         .customer-container {
-            max-width: 1100px;
-            margin: 30px auto;
-            padding: 20px;
+            margin: 15px auto;
+            padding: 15px;
         }
 
-        .search-form {
-            margin: 20px 0;
+        .customer-container h1 {
+            font-size: 28px;
         }
 
         .search-form input {
-            padding: 10px;
-            width: 65%;
-            max-width: 350px;
+            width: 100%;
         }
+    }
+</style>
 
-        .search-form button,
-        .details-button {
-            padding: 10px 15px;
-            cursor: pointer;
-        }
-
-        .product-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-            gap: 20px;
-            margin-top: 20px;
-        }
-
-        .product-card {
-            border: 1px solid #ddd;
-            border-radius: 8px;
-            padding: 18px;
-            background: #fff;
-        }
-
-        .product-card h3 {
-            margin-top: 0;
-        }
-
-        .product-price {
-            font-size: 20px;
-            font-weight: bold;
-        }
-
-        .details-button {
-            display: inline-block;
-            margin-top: 10px;
-            text-decoration: none;
-            background: #2563eb;
-            color: white;
-            border-radius: 4px;
-        }
-
-        .details-button:hover {
-            background: #1d4ed8;
-        }
-
-        .availability {
-            font-weight: bold;
-        }
-    </style>
 </head>
 
 <body>
@@ -101,9 +194,15 @@ if ($keyword !== "") {
     <h1>Welcome to OLMS</h1>
     <p>Browse the products available in our local mart.</p>
 
-    <nav>
-        <a href="customer_browse.php">Browse Products</a>
-    </nav>
+
+<nav>
+    <a href="../index.php">Home</a>
+    |
+    <a href="customer_browse.php">Browse Products</a>
+    |
+    <a href="admin_login.php">Admin Login</a>
+</nav>
+
 
     <form method="GET" action="customer_browse.php" class="search-form">
         <input

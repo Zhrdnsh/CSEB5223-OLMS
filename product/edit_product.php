@@ -81,10 +81,10 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
         // Prepare SQL statement to update the product
         $sql = "UPDATE products
-                SET name = ?, 
-                    description = ?, 
-                    price = ?, 
-                    expiry_date = ?, 
+                SET name = ?,
+                    description = ?,
+                    price = ?,
+                    expiry_date = ?,
                     quantity = ?
                 WHERE product_id = ?";
 
@@ -130,96 +130,266 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 <head>
     <title>Edit Product</title>
     <link rel="stylesheet" href="../css/style.css">
+
+
+<style>
+    * {
+        box-sizing: border-box;
+    }
+
+    body {
+        background: #fffaf5;
+        font-family: Arial, sans-serif;
+        color: #554b47;
+        margin: 0;
+        padding: 30px;
+    }
+
+    .edit-container {
+        max-width: 800px;
+        margin: 30px auto;
+    }
+
+    .page-header {
+        background: #fbe6ea;
+        padding: 30px;
+        border-radius: 18px;
+        margin-bottom: 25px;
+    }
+
+    .page-header h2 {
+        color: #76515d;
+        font-size: 30px;
+        margin: 0 0 10px;
+    }
+
+    .page-header p {
+        color: #806d70;
+        margin: 0;
+    }
+
+    .edit-nav {
+        background: #ffffff;
+        padding: 18px 22px;
+        border-radius: 12px;
+        margin-bottom: 25px;
+    }
+
+    .edit-nav a {
+        color: #a56b7b;
+        font-weight: bold;
+        margin-right: 18px;
+        text-decoration: none;
+    }
+
+    .edit-nav a:hover {
+        color: #76515d;
+    }
+
+    .edit-form {
+        background: #ffffff;
+        padding: 35px;
+        max-width: none;
+        border-radius: 18px;
+        border: 1px solid #f0e1e4;
+        box-shadow: 0 5px 18px rgba(100, 70, 80, 0.06);
+    }
+
+    .edit-form label {
+        display: block;
+        color: #76515d;
+        font-weight: bold;
+        font-size: 14px;
+        margin-bottom: 8px;
+    }
+
+    .edit-form input,
+    .edit-form textarea {
+        width: 100%;
+        padding: 13px;
+        margin: 0 0 22px;
+        border: 1px solid #e8d7d9;
+        border-radius: 10px;
+        background: #fffdfb;
+        font-size: 15px;
+        font-family: Arial, sans-serif;
+    }
+
+    .edit-form input:disabled {
+        background: #f6f1ef;
+        color: #927e81;
+        cursor: not-allowed;
+    }
+
+    .edit-form textarea {
+        min-height: 110px;
+        resize: vertical;
+    }
+
+    .edit-form input:focus,
+    .edit-form textarea:focus {
+        outline: 2px solid #d7b0bb;
+        border-color: #ad687b;
+    }
+
+    .update-button {
+        background: #a5b99c;
+        color: #ffffff;
+        padding: 14px 28px;
+        border: none;
+        border-radius: 10px;
+        font-size: 15px;
+        font-weight: bold;
+        cursor: pointer;
+    }
+
+    .update-button:hover {
+        background: #829a78;
+    }
+
+    .edit-container .success-message,
+    .edit-container .error-message {
+        padding: 15px 20px;
+        border-radius: 10px;
+        margin-bottom: 20px;
+    }
+
+    @media (max-width: 600px) {
+        body {
+            padding: 15px;
+        }
+
+        .page-header {
+            padding: 25px;
+        }
+
+        .page-header h2 {
+            font-size: 25px;
+        }
+
+        .edit-form {
+            padding: 25px 20px;
+        }
+
+        .edit-nav {
+            line-height: 2;
+        }
+
+        .update-button {
+            width: 100%;
+        }
+    }
+</style>
+
 </head>
+
 
 <body>
 
-<h2>Edit Product</h2>
+<div class="edit-container">
 
-<!-- Display success or error message -->
-<?php if ($message != ""): ?>
+    <div class="page-header">
+        <h2>Edit Product ♡</h2>
+        <p>Update your product information and inventory details.</p>
+    </div>
 
-    <?php if ($message == "Product updated successfully!"): ?>
+    <nav class="edit-nav">
+        <a href="admin_dashboard.php">Dashboard</a>
+        <a href="view_product.php">View Products</a>
+        <a href="search_product.php">Search Products</a>
+    </nav>
 
-        <p class="success-message">
-            <?php echo $message; ?>
-        </p>
+    <?php if ($message != ""): ?>
 
-    <?php else: ?>
+        <?php if ($message == "Product updated successfully!"): ?>
 
-        <p class="error-message">
-            <?php echo $message; ?>
-        </p>
+            <p class="success-message">
+                <?= htmlspecialchars($message) ?>
+            </p>
+
+        <?php else: ?>
+
+            <p class="error-message">
+                <?= htmlspecialchars($message) ?>
+            </p>
+
+        <?php endif; ?>
 
     <?php endif; ?>
 
-<?php endif; ?>
+    <form method="POST" class="edit-form">
 
-<!-- Edit Product form -->
-<form method="POST">
+        <label for="product_id">Product ID</label>
+        <input
+            type="text"
+            id="product_id"
+            value="<?= htmlspecialchars(
+                (string) $row["product_id"]
+            ) ?>"
+            disabled
+        >
 
-    <label>Product ID:</label><br>
-    <input
-        type="text"
-        value="<?php echo $row["product_id"]; ?>"
-        disabled
-    >
-    <br><br>
+        <label for="name">Product Name</label>
+        <input
+            type="text"
+            id="name"
+            name="name"
+            value="<?= htmlspecialchars($row["name"]) ?>"
+            required
+        >
 
-    <label>Product Name:</label><br>
-    <input
-        type="text"
-        name="name"
-        value="<?php echo htmlspecialchars($row["name"]); ?>"
-        required
-    >
-    <br><br>
+        <label for="description">Description</label>
+        <textarea
+            id="description"
+            name="description"
+            required
+        ><?= htmlspecialchars($row["description"]) ?></textarea>
 
-    <label>Description:</label><br>
-    <textarea
-        name="description"
-        required
-    ><?php echo htmlspecialchars($row["description"]); ?></textarea>
-    <br><br>
+        <label for="price">Price (RM)</label>
+        <input
+            type="number"
+            id="price"
+            name="price"
+            step="0.01"
+            min="0.01"
+            value="<?= htmlspecialchars(
+                (string) $row["price"]
+            ) ?>"
+            required
+        >
 
-    <label>Price (RM):</label><br>
-<input
-    type="number"
-    name="price"
-    step="0.01"
-    min="0.01"
-    value="<?php echo $row["price"]; ?>"
-    required
->
-    <br><br>
+        <label for="expiry_date">Expiry Date</label>
+        <input
+            type="date"
+            id="expiry_date"
+            name="expiry_date"
+            min="<?= date('Y-m-d') ?>"
+            value="<?= htmlspecialchars(
+                $row["expiry_date"]
+            ) ?>"
+            required
+        >
 
-    <label>Expiry Date:</label><br>
-    <input
-        type="date"
-        name="expiry_date"
-        min="<?php echo date('Y-m-d'); ?>"
-        value="<?php echo $row["expiry_date"]; ?>"
-        required
-    >
-    <br><br>
+        <label for="quantity">Quantity</label>
+        <input
+            type="number"
+            id="quantity"
+            name="quantity"
+            min="0"
+            value="<?= htmlspecialchars(
+                (string) $row["quantity"]
+            ) ?>"
+            required
+        >
 
-    <label>Quantity:</label><br>
-    <input
-        type="number"
-        name="quantity"
-        min="0"
-        value="<?php echo $row["quantity"]; ?>"
-        required
-    >
-    <br><br>
+        <button type="submit" class="update-button">
+            Update Product
+        </button>
 
-    <button type="submit">Update Product</button>
+    </form>
 
-</form>
-
-<br>
-
-<a href="view_product.php">Back to Product List</a>
+</div>
 
 </body>
+
 </html>

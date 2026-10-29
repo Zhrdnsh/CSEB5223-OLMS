@@ -28,35 +28,129 @@ if ($productID !== false && $productID !== null && $productID > 0) {
     <title>Product Details - OLMS</title>
     <link rel="stylesheet" href="../css/style.css">
 
-    <style>
+
+<style>
+    body {
+        background: #fffaf5;
+        color: #554b47;
+        font-family: Arial, sans-serif;
+        margin: 0;
+        padding: 30px;
+    }
+
+    nav {
+        max-width: 1100px;
+        margin: 0 auto 35px;
+        padding: 18px 25px;
+        background: #ffffff;
+        border-radius: 12px;
+    }
+
+    nav a {
+        color: #a56b7b;
+        font-weight: bold;
+        margin-right: 15px;
+        text-decoration: none;
+    }
+
+    nav a:hover {
+        color: #76515d;
+    }
+
+    .details-container {
+        max-width: 750px;
+        margin: 40px auto;
+        padding: 45px;
+        border: 1px solid #f0e1e4;
+        border-radius: 20px;
+        background: #ffffff;
+        box-shadow: 0 8px 25px rgba(100, 70, 80, 0.06);
+    }
+
+    .details-container h1 {
+        color: #76515d;
+        font-size: 32px;
+        margin-top: 0;
+        margin-bottom: 15px;
+    }
+
+    .details-container h3 {
+        color: #76515d;
+        font-size: 18px;
+        margin-top: 30px;
+    }
+
+    .details-container p {
+        font-size: 15px;
+        line-height: 1.8;
+        color: #665b57;
+    }
+
+    .product-price {
+        display: inline-block;
+        font-size: 28px !important;
+        font-weight: bold;
+        color: #ad687b !important;
+        background: #fbe6ea;
+        padding: 12px 20px;
+        border-radius: 12px;
+        margin: 10px 0;
+    }
+
+    .details-container strong {
+        color: #76515d;
+    }
+
+    .back-button {
+        display: inline-block;
+        margin-top: 30px;
+        padding: 13px 25px;
+        background: #a5b99c;
+        color: #ffffff;
+        font-weight: bold;
+        text-decoration: none;
+        border-radius: 10px;
+        transition: background 0.2s ease;
+    }
+
+    .back-button:hover {
+        background: #829a78;
+    }
+
+    @media (max-width: 600px) {
+        body {
+            padding: 15px;
+        }
+
         .details-container {
-            max-width: 700px;
-            margin: 40px auto;
             padding: 25px;
-            border: 1px solid #ddd;
-            border-radius: 8px;
-            background: #fff;
+            margin: 20px auto;
         }
 
-        .product-price {
-            font-size: 24px;
-            font-weight: bold;
-            color: #2563eb;
+        .details-container h1 {
+            font-size: 25px;
         }
 
-        .back-button {
-            display: inline-block;
-            margin-top: 15px;
-            padding: 10px 15px;
-            background: #2563eb;
-            color: white;
-            text-decoration: none;
-            border-radius: 4px;
+        nav {
+            padding: 15px;
+            line-height: 2;
         }
-    </style>
+    }
+</style>
+
 </head>
 
 <body>
+
+
+<nav>
+    <a href="../index.php">Home</a>
+    |
+    <a href="customer_browse.php">Browse Products</a>
+    |
+    <a href="admin_login.php">Admin Login</a>
+</nav>
+
 
 <div class="details-container">
 

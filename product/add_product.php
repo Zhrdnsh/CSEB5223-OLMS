@@ -57,7 +57,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $quantity = $product->getQuantity();
 
         // Prepare SQL statement to insert the product
-        $sql = "INSERT INTO products 
+        $sql = "INSERT INTO products
                 (name, description, price, expiry_date, quantity)
                 VALUES (?, ?, ?, ?, ?)";
 
@@ -90,80 +90,234 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 <head>
     <title>Add Product</title>
     <link rel="stylesheet" href="../css/style.css">
+
+
+<style>
+    body {
+        background: #fffaf5;
+        font-family: Arial, sans-serif;
+        color: #554b47;
+        margin: 0;
+        padding: 30px;
+    }
+
+    .add-container {
+        max-width: 800px;
+        margin: 30px auto;
+    }
+
+    .page-header {
+        background: #fbe6ea;
+        padding: 30px;
+        border-radius: 18px;
+        margin-bottom: 25px;
+    }
+
+    .page-header h2 {
+        color: #76515d;
+        font-size: 30px;
+        margin: 0 0 10px;
+    }
+
+    .page-header p {
+        color: #806d70;
+        margin: 0;
+    }
+
+    .add-container nav {
+        background: #ffffff;
+        padding: 18px 22px;
+        border-radius: 12px;
+        margin-bottom: 25px;
+    }
+
+    .add-container nav a {
+        color: #a56b7b;
+        font-weight: bold;
+        margin-right: 18px;
+    }
+
+    .add-container nav a:hover {
+        color: #76515d;
+    }
+
+    .add-form {
+        background: #ffffff;
+        padding: 35px;
+        max-width: none;
+        border-radius: 18px;
+        border: 1px solid #f0e1e4;
+        box-shadow: 0 5px 18px rgba(100, 70, 80, 0.06);
+    }
+
+    .add-form label {
+        display: block;
+        color: #76515d;
+        font-weight: bold;
+        font-size: 14px;
+        margin-bottom: 8px;
+    }
+
+    .add-form input,
+    .add-form textarea {
+        width: 100%;
+        padding: 13px;
+        margin: 0 0 22px;
+        border: 1px solid #e8d7d9;
+        border-radius: 10px;
+        background: #fffdfb;
+        font-size: 15px;
+        font-family: Arial, sans-serif;
+    }
+
+    .add-form textarea {
+        min-height: 110px;
+        resize: vertical;
+    }
+
+    .add-form input:focus,
+    .add-form textarea:focus {
+        outline: 2px solid #d7b0bb;
+        border-color: #ad687b;
+    }
+
+    .add-button {
+        background: #a5b99c;
+        color: #ffffff;
+        padding: 14px 28px;
+        border: none;
+        border-radius: 10px;
+        font-size: 15px;
+        font-weight: bold;
+        cursor: pointer;
+    }
+
+    .add-button:hover {
+        background: #829a78;
+    }
+
+    .add-container .success-message,
+    .add-container .error-message {
+        border-radius: 10px;
+        margin-bottom: 20px;
+    }
+
+    @media (max-width: 600px) {
+        body {
+            padding: 15px;
+        }
+
+        .page-header {
+            padding: 25px;
+        }
+
+        .page-header h2 {
+            font-size: 25px;
+        }
+
+        .add-form {
+            padding: 25px 20px;
+        }
+
+        .add-container nav {
+            line-height: 2;
+        }
+
+        .add-button {
+            width: 100%;
+        }
+    }
+</style>
+
 </head>
+
 
 <body>
 
-<h2>Add Product</h2>
+<div class="add-container">
 
-<!-- Display success or error message -->
-<?php if ($message != ""): ?>
+    <div class="page-header">
+        <h2>Add New Product ♡</h2>
+        <p>Add a new item to your local mart inventory.</p>
+    </div>
 
-    <?php if ($message == "Product added successfully!"): ?>
+    <nav>
+        <a href="admin_dashboard.php">Dashboard</a>
+        <a href="view_product.php">View Products</a>
+        <a href="search_product.php">Search Products</a>
+    </nav>
 
-        <p class="success-message">
-            <?php echo $message; ?>
-        </p>
+    <?php if ($message != ""): ?>
 
-    <?php else: ?>
-
-        <p class="error-message">
-            <?php echo $message; ?>
-        </p>
+        <?php if ($message == "Product added successfully!"): ?>
+            <p class="success-message">
+                <?= htmlspecialchars($message) ?>
+            </p>
+        <?php else: ?>
+            <p class="error-message">
+                <?= htmlspecialchars($message) ?>
+            </p>
+        <?php endif; ?>
 
     <?php endif; ?>
 
-<?php endif; ?>
+    <form method="POST" class="add-form">
 
-<!-- Product Management navigation -->
-<nav>
-    <a href="admin_dashboard.php">Dashboard</a>
-    <a href="view_product.php">View Products</a>
-    <a href="search_product.php">Search Product</a>
-</nav>
+        <label for="name">Product Name</label>
+        <input
+            type="text"
+            id="name"
+            name="name"
+            placeholder="Enter product name"
+            required
+        >
 
-<!-- Add Product form -->
-<form method="POST">
+        <label for="description">Description</label>
+        <textarea
+            id="description"
+            name="description"
+            placeholder="Enter product description"
+            required
+        ></textarea>
 
-    <label>Product Name:</label><br>
-    <input type="text" name="name" required>
-    <br><br>
+        <label for="price">Price (RM)</label>
+        <input
+            type="number"
+            id="price"
+            name="price"
+            step="0.01"
+            min="0.01"
+            placeholder="0.00"
+            required
+        >
 
-    <label>Description:</label><br>
-    <textarea name="description" required></textarea>
-    <br><br>
+        <label for="expiry_date">Expiry Date</label>
+        <input
+            type="date"
+            id="expiry_date"
+            name="expiry_date"
+            min="<?= date('Y-m-d') ?>"
+            required
+        >
 
-    <label>Price (RM):</label><br>
-<input
-    type="number"
-    name="price"
-    step="0.01"
-    min="0.01"
-    required
->
-    <br><br>
+        <label for="quantity">Quantity</label>
+        <input
+            type="number"
+            id="quantity"
+            name="quantity"
+            min="0"
+            placeholder="Enter available quantity"
+            required
+        >
 
-    <label>Expiry Date:</label><br>
-    <input
-        type="date"
-        name="expiry_date"
-        min="<?php echo date('Y-m-d'); ?>"
-        required
-    >
-    <br><br>
+        <button type="submit" class="add-button">
+            Add Product
+        </button>
 
-    <label>Quantity:</label><br>
-    <input
-        type="number"
-        name="quantity"
-        min="0"
-        required
-    >
-    <br><br>
+    </form>
 
-    <button type="submit">Add Product</button>
-
-</form>
+</div>
 
 </body>
+
 </html>

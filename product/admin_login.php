@@ -63,41 +63,185 @@ $conn->close();
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Login - OLMS</title>
     <link rel="stylesheet" href="../css/style.css">
+
+
+<style>
+    body {
+        background: #fffaf5;
+        font-family: Arial, sans-serif;
+        margin: 0;
+        padding: 0;
+        color: #554b47;
+    }
+
+    .login-page {
+        min-height: 100vh;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        padding: 30px 20px;
+    }
+
+    .login-card {
+        background: #ffffff;
+        width: 100%;
+        max-width: 440px;
+        padding: 45px 40px;
+        border-radius: 22px;
+        border: 1px solid #f0e1e4;
+        box-shadow: 0 10px 30px rgba(100, 70, 80, 0.07);
+        text-align: center;
+    }
+
+    .login-logo {
+        font-size: 28px;
+        font-weight: bold;
+        color: #ad687b;
+        margin-bottom: 12px;
+    }
+
+    .login-card h2 {
+        color: #76515d;
+        font-size: 25px;
+        margin-bottom: 10px;
+    }
+
+    .login-subtitle {
+        color: #927e81;
+        font-size: 14px;
+        margin-bottom: 30px;
+    }
+
+    .login-form {
+        padding: 0;
+        max-width: none;
+        text-align: left;
+        background: transparent;
+    }
+
+    .login-form label {
+        display: block;
+        color: #76515d;
+        font-size: 14px;
+        margin-bottom: 8px;
+    }
+
+    .login-form input {
+        width: 100%;
+        padding: 13px 15px;
+        border: 1px solid #e8d7d9;
+        border-radius: 10px;
+        background: #fffdfb;
+        margin: 0 0 20px;
+        font-size: 15px;
+    }
+
+    .login-form input:focus {
+        outline: 2px solid #d7b0bb;
+        border-color: #ad687b;
+    }
+
+    .login-button {
+        width: 100%;
+        background: #a5b99c;
+        color: #ffffff;
+        border: none;
+        padding: 14px;
+        border-radius: 10px;
+        font-size: 16px;
+        font-weight: bold;
+        cursor: pointer;
+    }
+
+    .login-button:hover {
+        background: #829a78;
+    }
+
+    .back-home {
+        display: inline-block;
+        margin-top: 25px;
+        color: #ad687b;
+        font-size: 14px;
+        font-weight: bold;
+    }
+
+    .back-home:hover {
+        color: #76515d;
+    }
+
+    .login-card .error-message {
+        text-align: left;
+        border-radius: 10px;
+        font-size: 14px;
+    }
+
+    @media (max-width: 480px) {
+        .login-card {
+            padding: 30px 22px;
+        }
+    }
+</style>
+
 </head>
+
 <body>
 
-<h2>Online Local Mart Management System</h2>
-<h3>Admin Login</h3>
+<div class="login-page">
 
-<?php if ($error !== ""): ?>
-    <p class="error-message">
-        <?= htmlspecialchars($error) ?>
-    </p>
-<?php endif; ?>
+    <div class="login-card">
 
-<form method="POST" action="admin_login.php">
-    <label for="username">Username:</label><br>
-    <input
-        type="text"
-        id="username"
-        name="username"
-        autocomplete="username"
-        required
-    >
-    <br><br>
+        <div class="login-logo">OLMS ♡</div>
 
-    <label for="password">Password:</label><br>
-    <input
-        type="password"
-        id="password"
-        name="password"
-        autocomplete="current-password"
-        required
-    >
-    <br><br>
+        <h2>Welcome Back!</h2>
 
-    <button type="submit">Login</button>
-</form>
+        <p class="login-subtitle">
+            Admin Login · Online Local Mart System
+        </p>
+
+        <?php if ($error !== ""): ?>
+            <p class="error-message">
+                <?= htmlspecialchars($error) ?>
+            </p>
+        <?php endif; ?>
+
+        <form method="POST"
+              action="admin_login.php"
+              class="login-form">
+
+            <label for="username">Username</label>
+            <input
+                type="text"
+                id="username"
+                name="username"
+                placeholder="Enter your username"
+                autocomplete="username"
+                required
+            >
+
+            <label for="password">Password</label>
+            <input
+                type="password"
+                id="password"
+                name="password"
+                placeholder="Enter your password"
+                autocomplete="current-password"
+                required
+            >
+
+            <button type="submit" class="login-button">
+                Login
+            </button>
+
+        </form>
+
+        <a href="../index.php" class="back-home">
+            ← Back to Homepage
+        </a>
+
+    </div>
+
+</div>
 
 </body>
+
 </html>
