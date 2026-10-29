@@ -8,8 +8,8 @@ cart, place orders, and make payments online.
 
 ## Team Members
 - Muhammad Zahir Danish
-- Nur Aina Aliah
 - Nurimaneesa
+- Nur Aina Aliah
 
 ## Coding Standards
 The project follows defined naming conventions, coding formatting,
