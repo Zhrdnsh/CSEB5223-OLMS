@@ -1,0 +1,35 @@
+
+# ============================================
+# OLMS - Git Ignore
+# ============================================
+
+# Environment and local secrets
+.env
+.env.*
+!.env.example
+
+# IDE settings
+.vscode/
+.idea/
+
+# Operating system files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# PHP dependencies
+/vendor/
+
+# Logs and temporary files
+*.log
+*.tmp
+*.bak
+*.swp
+
+# Temporary test scripts
+test_product.php
+
+# Local database backups
+*.sql.bak
+*.sql.gz
+*.sql.zip

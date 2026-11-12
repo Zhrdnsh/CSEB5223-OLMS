@@ -1,267 +1,350 @@
-<?php
 
-// Connect to the database and include the Product class
-require_once "auth.php";
+<?php
+// Protect this page and load required files
+require_once "../admin/auth.php";
 require_once "../config/database.php";
 require_once "../classes/Product.php";
 
+// Generate a CSRF token for the admin session
+if (empty($_SESSION["csrf_token"])) {
+    $_SESSION["csrf_token"] = bin2hex(random_bytes(32));
+}
+
+// Default values
 $message = "";
 
-// Check if the form has been submitted
-if ($_SERVER["REQUEST_METHOD"] == "POST") {
+$name = "";
+$description = "";
+$price = "";
+$expiryDate = "";
+$quantity = "";
 
-    // Get and clean input values from the form
-    $name = trim($_POST["name"]);
-    $description = trim($_POST["description"]);
-    $price = $_POST["price"];
-    $expiryDate = $_POST["expiry_date"];
-    $quantity = $_POST["quantity"];
+// Process the submitted form
+if ($_SERVER["REQUEST_METHOD"] === "POST") {
+
+    // Retrieve and sanitize input values
+    $name = trim($_POST["name"] ?? "");
+    $description = trim($_POST["description"] ?? "");
+    $price = trim((string) ($_POST["price"] ?? ""));
+    $expiryDate = trim($_POST["expiry_date"] ?? "");
+    $quantity = trim((string) ($_POST["quantity"] ?? ""));
+
+    // Validate CSRF token
+    $submittedToken = $_POST["csrf_token"] ?? "";
+
+    if (
+        !is_string($submittedToken) ||
+        !hash_equals($_SESSION["csrf_token"], $submittedToken)
+    ) {
+        $message = "Invalid security token. Please refresh and try again.";
 
     // Validate required fields
-    if ($name == "" || $description == "" || $expiryDate == "") {
-
+    } elseif (
+        $name === "" ||
+        $description === "" ||
+        $price === "" ||
+        $expiryDate === "" ||
+        $quantity === ""
+    ) {
         $message = "Please fill in all fields.";
 
-    // Prevent past expiry dates
-    } elseif ($expiryDate < date("Y-m-d")) {
-
-        $message = "Expiry date cannot be in the past.";
+    // Validate product name length
+    } elseif (strlen($name) > 255) {
+        $message = "Product name must not exceed 255 characters.";
 
     // Validate product price
-} elseif (!is_numeric($price) || $price <= 0) {
+    } elseif (
+        !is_numeric($price) ||
+        !is_finite((float) $price) ||
+        (float) $price <= 0 ||
+        (float) $price > 99999999.99 ||
+        !preg_match('/^\d+(\.\d{1,2})?$/', $price)
+    ) {
+        $message = "Enter a valid price greater than RM0.00 with up to 2 decimal places.";
 
-    $message = "Price must be greater than RM0.00.";
-
-    // Validate product quantity
-    } elseif (!is_numeric($quantity) || $quantity < 0) {
-
-        $message = "Quantity cannot be negative.";
+    // Validate quantity as a whole number
+    } elseif (
+        filter_var(
+            $quantity,
+            FILTER_VALIDATE_INT,
+            ["options" => ["min_range" => 0]]
+        ) === false
+    ) {
+        $message = "Quantity must be a whole number of 0 or more.";
 
     } else {
 
-        // Create a Product object
-        $product = new Product();
-
-        // Set product information
-        $product->setName($name);
-        $product->setDescription($description);
-        $product->setPrice($price);
-        $product->setExpiryDate($expiryDate);
-        $product->setQuantity($quantity);
-
-        // Get product information from the Product object
-        $name = $product->getName();
-        $description = $product->getDescription();
-        $price = $product->getPrice();
-        $expiryDate = $product->getExpiryDate();
-        $quantity = $product->getQuantity();
-
-        // Prepare SQL statement to insert the product
-        $sql = "INSERT INTO products
-                (name, description, price, expiry_date, quantity)
-                VALUES (?, ?, ?, ?, ?)";
-
-        $stmt = $conn->prepare($sql);
-
-        // Bind product values to the SQL statement
-        $stmt->bind_param(
-            "ssdsi",
-            $name,
-            $description,
-            $price,
-            $expiryDate,
-            $quantity
+        // Validate expiry date format
+        $date = DateTimeImmutable::createFromFormat(
+            "!Y-m-d",
+            $expiryDate
         );
 
-        // Execute the INSERT statement
-        if ($stmt->execute()) {
-            $message = "Product added successfully!";
+        if (
+            !$date ||
+            $date->format("Y-m-d") !== $expiryDate
+        ) {
+            $message = "Please enter a valid expiry date.";
+
+        } elseif ($expiryDate < date("Y-m-d")) {
+            $message = "Expiry date cannot be in the past.";
+
         } else {
-            $message = "Failed to add product.";
+
+            // Create a Product object
+            $product = new Product();
+
+            // Set product information
+            $product->setName($name);
+            $product->setDescription($description);
+            $product->setPrice((float) $price);
+            $product->setExpiryDate($expiryDate);
+            $product->setQuantity((int) $quantity);
+
+            // Retrieve values from the Product object
+            $name = $product->getName();
+            $description = $product->getDescription();
+            $priceValue = $product->getPrice();
+            $expiryDate = $product->getExpiryDate();
+            $quantityValue = $product->getQuantity();
+
+            try {
+                // Prepare the SQL INSERT statement
+                $sql = "INSERT INTO products
+                        (name, description, price, expiry_date, quantity)
+                        VALUES (?, ?, ?, ?, ?)";
+
+                $stmt = $conn->prepare($sql);
+
+                // Bind product values
+                $stmt->bind_param(
+                    "ssdsi",
+                    $name,
+                    $description,
+                    $priceValue,
+                    $expiryDate,
+                    $quantityValue
+                );
+
+                // Insert product into the database
+                $stmt->execute();
+                $stmt->close();
+
+                // Redirect after successful insertion
+                header("Location: view_product.php?added=1");
+                exit();
+
+            } catch (mysqli_sql_exception $e) {
+
+                // Log technical error without exposing it to users
+                error_log("Add Product Error: " . $e->getMessage());
+
+                $message = "Failed to add product. Please try again.";
+            }
         }
     }
 }
-
 ?>
 
 <!DOCTYPE html>
-<html>
+<html lang="en">
 
 <head>
-    <title>Add Product</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Add Product - OLMS</title>
+
+    <!-- External Stylesheet -->
     <link rel="stylesheet" href="../css/style.css">
 
-
-<style>
-    body {
-        background: #fffaf5;
-        font-family: Arial, sans-serif;
-        color: #554b47;
-        margin: 0;
-        padding: 30px;
-    }
-
-    .add-container {
-        max-width: 800px;
-        margin: 30px auto;
-    }
-
-    .page-header {
-        background: #fbe6ea;
-        padding: 30px;
-        border-radius: 18px;
-        margin-bottom: 25px;
-    }
-
-    .page-header h2 {
-        color: #76515d;
-        font-size: 30px;
-        margin: 0 0 10px;
-    }
-
-    .page-header p {
-        color: #806d70;
-        margin: 0;
-    }
-
-    .add-container nav {
-        background: #ffffff;
-        padding: 18px 22px;
-        border-radius: 12px;
-        margin-bottom: 25px;
-    }
-
-    .add-container nav a {
-        color: #a56b7b;
-        font-weight: bold;
-        margin-right: 18px;
-    }
-
-    .add-container nav a:hover {
-        color: #76515d;
-    }
-
-    .add-form {
-        background: #ffffff;
-        padding: 35px;
-        max-width: none;
-        border-radius: 18px;
-        border: 1px solid #f0e1e4;
-        box-shadow: 0 5px 18px rgba(100, 70, 80, 0.06);
-    }
-
-    .add-form label {
-        display: block;
-        color: #76515d;
-        font-weight: bold;
-        font-size: 14px;
-        margin-bottom: 8px;
-    }
-
-    .add-form input,
-    .add-form textarea {
-        width: 100%;
-        padding: 13px;
-        margin: 0 0 22px;
-        border: 1px solid #e8d7d9;
-        border-radius: 10px;
-        background: #fffdfb;
-        font-size: 15px;
-        font-family: Arial, sans-serif;
-    }
-
-    .add-form textarea {
-        min-height: 110px;
-        resize: vertical;
-    }
-
-    .add-form input:focus,
-    .add-form textarea:focus {
-        outline: 2px solid #d7b0bb;
-        border-color: #ad687b;
-    }
-
-    .add-button {
-        background: #a5b99c;
-        color: #ffffff;
-        padding: 14px 28px;
-        border: none;
-        border-radius: 10px;
-        font-size: 15px;
-        font-weight: bold;
-        cursor: pointer;
-    }
-
-    .add-button:hover {
-        background: #829a78;
-    }
-
-    .add-container .success-message,
-    .add-container .error-message {
-        border-radius: 10px;
-        margin-bottom: 20px;
-    }
-
-    @media (max-width: 600px) {
+    <style>
+        /* General Page Styling */
         body {
-            padding: 15px;
+            background: #fffaf5;
+            font-family: Arial, sans-serif;
+            color: #554b47;
+            margin: 0;
+            padding: 30px;
         }
 
+        .add-container {
+            max-width: 800px;
+            margin: 30px auto;
+        }
+
+        /* Page Header */
         .page-header {
-            padding: 25px;
+            background: #fbe6ea;
+            padding: 30px;
+            border-radius: 18px;
+            margin-bottom: 25px;
         }
 
         .page-header h2 {
-            font-size: 25px;
+            color: #76515d;
+            font-size: 30px;
+            margin: 0 0 10px;
         }
 
-        .add-form {
-            padding: 25px 20px;
+        .page-header p {
+            color: #806d70;
+            margin: 0;
         }
 
+        /* Navigation */
         .add-container nav {
-            line-height: 2;
+            background: #ffffff;
+            padding: 18px 22px;
+            border-radius: 12px;
+            margin-bottom: 25px;
         }
 
-        .add-button {
-            width: 100%;
+        .add-container nav a {
+            color: #a56b7b;
+            font-weight: bold;
+            margin-right: 18px;
         }
-    }
-</style>
+
+        .add-container nav a:hover {
+            color: #76515d;
+        }
+
+        /* Add Product Form */
+        .add-form {
+            background: #ffffff;
+            padding: 35px;
+            max-width: none;
+            border-radius: 18px;
+            border: 1px solid #f0e1e4;
+            box-shadow: 0 5px 18px rgba(100, 70, 80, 0.06);
+        }
+
+        .add-form label {
+            display: block;
+            color: #76515d;
+            font-weight: bold;
+            font-size: 14px;
+            margin-bottom: 8px;
+        }
+
+        .add-form input,
+        .add-form textarea {
+            width: 100%;
+            box-sizing: border-box;
+            padding: 13px;
+            margin: 0 0 22px;
+            border: 1px solid #e8d7d9;
+            border-radius: 10px;
+            background: #fffdfb;
+            font-size: 15px;
+            font-family: Arial, sans-serif;
+        }
+
+        .add-form textarea {
+            min-height: 110px;
+            resize: vertical;
+        }
+
+        .add-form input:focus,
+        .add-form textarea:focus {
+            outline: 2px solid #d7b0bb;
+            border-color: #ad687b;
+        }
+
+        /* Submit Button */
+        .add-button {
+            background: #a5b99c;
+            color: #ffffff;
+            padding: 14px 28px;
+            border: none;
+            border-radius: 10px;
+            font-size: 15px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .add-button:hover {
+            background: #829a78;
+        }
+
+        /* Error Message */
+        .add-container .error-message {
+            background: #fbe6ea;
+            color: #a04e65;
+            border: 1px solid #f2cbd5;
+            border-radius: 10px;
+            padding: 15px 20px;
+            margin-bottom: 20px;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 600px) {
+            body {
+                padding: 15px;
+            }
+
+            .page-header {
+                padding: 25px;
+            }
+
+            .page-header h2 {
+                font-size: 25px;
+            }
+
+            .add-form {
+                padding: 25px 20px;
+            }
+
+            .add-container nav {
+                line-height: 2;
+            }
+
+            .add-button {
+                width: 100%;
+            }
+        }
+    </style>
 
 </head>
-
 
 <body>
 
 <div class="add-container">
 
+    <!-- Page Header -->
     <div class="page-header">
         <h2>Add New Product ♡</h2>
         <p>Add a new item to your local mart inventory.</p>
     </div>
 
+    <!-- Navigation -->
     <nav>
-        <a href="admin_dashboard.php">Dashboard</a>
+        <a href="../admin/admin_dashboard.php">Dashboard</a>
         <a href="view_product.php">View Products</a>
         <a href="search_product.php">Search Products</a>
     </nav>
 
-    <?php if ($message != ""): ?>
-
-        <?php if ($message == "Product added successfully!"): ?>
-            <p class="success-message">
-                <?= htmlspecialchars($message) ?>
-            </p>
-        <?php else: ?>
-            <p class="error-message">
-                <?= htmlspecialchars($message) ?>
-            </p>
-        <?php endif; ?>
-
+    <!-- Error Message -->
+    <?php if ($message !== ""): ?>
+        <p class="error-message">
+            <?= htmlspecialchars($message, ENT_QUOTES, "UTF-8") ?>
+        </p>
     <?php endif; ?>
 
+    <!-- Add Product Form -->
     <form method="POST" class="add-form">
+
+        <!-- CSRF Protection -->
+        <input
+            type="hidden"
+            name="csrf_token"
+            value="<?= htmlspecialchars(
+                $_SESSION["csrf_token"],
+                ENT_QUOTES,
+                "UTF-8"
+            ) ?>"
+        >
 
         <label for="name">Product Name</label>
         <input
@@ -269,6 +352,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             id="name"
             name="name"
             placeholder="Enter product name"
+            maxlength="255"
+            value="<?= htmlspecialchars($name, ENT_QUOTES, "UTF-8") ?>"
             required
         >
 
@@ -278,7 +363,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             name="description"
             placeholder="Enter product description"
             required
-        ></textarea>
+        ><?= htmlspecialchars($description, ENT_QUOTES, "UTF-8") ?></textarea>
 
         <label for="price">Price (RM)</label>
         <input
@@ -288,6 +373,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             step="0.01"
             min="0.01"
             placeholder="0.00"
+            value="<?= htmlspecialchars((string) $price, ENT_QUOTES, "UTF-8") ?>"
             required
         >
 
@@ -296,7 +382,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             type="date"
             id="expiry_date"
             name="expiry_date"
-            min="<?= date('Y-m-d') ?>"
+            min="<?= date("Y-m-d") ?>"
+            value="<?= htmlspecialchars($expiryDate, ENT_QUOTES, "UTF-8") ?>"
             required
         >
 
@@ -306,7 +393,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             id="quantity"
             name="quantity"
             min="0"
+            step="1"
             placeholder="Enter available quantity"
+            value="<?= htmlspecialchars((string) $quantity, ENT_QUOTES, "UTF-8") ?>"
             required
         >
 
@@ -319,5 +408,4 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 </div>
 
 </body>
-
 </html>

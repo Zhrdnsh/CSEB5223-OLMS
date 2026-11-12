@@ -1,6 +1,10 @@
-<?php
 
-// Product class represents product information in the OLMS
+<?php
+// ============================================
+// OLMS Product Class
+// Represents product information
+// ============================================
+
 class Product
 {
     // Product attributes
@@ -11,7 +15,7 @@ class Product
     private $expiryDate;
     private $quantity;
 
-    // Get and set Product ID
+    // Product ID
     public function getProductID()
     {
         return $this->productID;
@@ -19,10 +23,22 @@ class Product
 
     public function setProductID($productID)
     {
-        $this->productID = $productID;
+        if (
+            filter_var(
+                $productID,
+                FILTER_VALIDATE_INT,
+                ["options" => ["min_range" => 1]]
+            ) === false
+        ) {
+            throw new InvalidArgumentException(
+                "Product ID must be a positive integer."
+            );
+        }
+
+        $this->productID = (int) $productID;
     }
 
-    // Get and set Product Name
+    // Product Name
     public function getName()
     {
         return $this->name;
@@ -30,10 +46,22 @@ class Product
 
     public function setName($name)
     {
-        $this->name = $name;
+        if (!is_string($name) || trim($name) === "") {
+            throw new InvalidArgumentException(
+                "Product name cannot be empty."
+            );
+        }
+
+        if (strlen($name) > 255) {
+            throw new InvalidArgumentException(
+                "Product name must not exceed 255 bytes."
+            );
+        }
+
+        $this->name = trim($name);
     }
 
-    // Get and set Product Description
+    // Product Description
     public function getDescription()
     {
         return $this->description;
@@ -41,10 +69,22 @@ class Product
 
     public function setDescription($description)
     {
-        $this->description = $description;
+        if (!is_string($description) || trim($description) === "") {
+            throw new InvalidArgumentException(
+                "Product description cannot be empty."
+            );
+        }
+
+        if (strlen($description) > 255) {
+            throw new InvalidArgumentException(
+                "Product description must not exceed 255 bytes."
+            );
+        }
+
+        $this->description = trim($description);
     }
 
-    // Get and set Product Price
+    // Product Price
     public function getPrice()
     {
         return $this->price;
@@ -52,10 +92,23 @@ class Product
 
     public function setPrice($price)
     {
-        $this->price = $price;
+        if (
+            !is_scalar($price) ||
+            is_bool($price) ||
+            !is_numeric($price) ||
+            !is_finite((float) $price) ||
+            (float) $price <= 0 ||
+            (float) $price > 99999999.99
+        ) {
+            throw new InvalidArgumentException(
+                "Product price must be greater than zero."
+            );
+        }
+
+        $this->price = round((float) $price, 2);
     }
 
-    // Get and set Product Expiry Date
+    // Product Expiry Date
     public function getExpiryDate()
     {
         return $this->expiryDate;
@@ -63,10 +116,30 @@ class Product
 
     public function setExpiryDate($expiryDate)
     {
+        if (!is_string($expiryDate)) {
+            throw new InvalidArgumentException(
+                "Invalid expiry date."
+            );
+        }
+
+        $date = DateTimeImmutable::createFromFormat(
+            "!Y-m-d",
+            $expiryDate
+        );
+
+        if (
+            !$date ||
+            $date->format("Y-m-d") !== $expiryDate
+        ) {
+            throw new InvalidArgumentException(
+                "Expiry date must use YYYY-MM-DD format."
+            );
+        }
+
         $this->expiryDate = $expiryDate;
     }
 
-    // Get and set Product Quantity
+    // Product Quantity
     public function getQuantity()
     {
         return $this->quantity;
@@ -74,8 +147,23 @@ class Product
 
     public function setQuantity($quantity)
     {
-        $this->quantity = $quantity;
+        if (
+            filter_var(
+                $quantity,
+                FILTER_VALIDATE_INT,
+                [
+                    "options" => [
+                        "min_range" => 0,
+                        "max_range" => 2147483647
+                    ]
+                ]
+            ) === false
+        ) {
+            throw new InvalidArgumentException(
+                "Quantity must be a non-negative integer."
+            );
+        }
+
+        $this->quantity = (int) $quantity;
     }
 }
-
-?>

@@ -1,13 +1,29 @@
 
 <?php
+// ============================================
+// OLMS Delete Product
+// Admin authentication and secure deletion
+// ============================================
 
-// Connect to the database
-require_once "auth.php";
+// Require administrator authentication
+require_once "../admin/auth.php";
+
+// Connect to database
 require_once "../config/database.php";
 
+// Default values
 $message = "";
+$row = null;
 
-// Check if a valid Product ID is provided
+// Ensure CSRF token exists
+if (
+    !isset($_SESSION["csrf_token"]) ||
+    !is_string($_SESSION["csrf_token"])
+) {
+    $_SESSION["csrf_token"] = bin2hex(random_bytes(32));
+}
+
+// Validate product ID
 $productID = filter_input(
     INPUT_GET,
     "id",
@@ -15,63 +31,98 @@ $productID = filter_input(
     ["options" => ["min_range" => 1]]
 );
 
-if (!$productID) {
-    die("Product not found.");
-}
+if ($productID === false || $productID === null) {
 
-// Get the selected product information
-$sql = "SELECT * FROM products WHERE product_id = ?";
-$stmt = $conn->prepare($sql);
-$stmt->bind_param("i", $productID);
-$stmt->execute();
+    http_response_code(400);
+    $message = "Invalid product ID.";
 
-$result = $stmt->get_result();
+} else {
 
-// Check if the product exists
-if ($result->num_rows == 0) {
-    die("Product not found.");
-}
+    try {
 
-$row = $result->fetch_assoc();
-$stmt->close();
+        // Retrieve product details
+        $sql = "SELECT product_id,
+                       name,
+                       description,
+                       price,
+                       expiry_date,
+                       quantity
+                FROM products
+                WHERE product_id = ?";
 
-// Delete the product after confirmation
-if ($_SERVER["REQUEST_METHOD"] === "POST") {
-
-    // Validate CSRF token
-    $submittedToken = $_POST["csrf_token"] ?? "";
-    $sessionToken = $_SESSION["csrf_token"] ?? "";
-
-    if (
-        $sessionToken === "" ||
-        !is_string($submittedToken) ||
-        !hash_equals($sessionToken, $submittedToken)
-    ) {
-        $message = "Invalid request. Please try again.";
-
-    } else {
-
-        // Prepare SQL statement to delete the product
-        $sql = "DELETE FROM products WHERE product_id = ?";
         $stmt = $conn->prepare($sql);
         $stmt->bind_param("i", $productID);
+        $stmt->execute();
 
-        if ($stmt->execute() && $stmt->affected_rows > 0) {
+        $result = $stmt->get_result();
+        $row = $result->fetch_assoc();
 
-            $stmt->close();
+        $result->free();
+        $stmt->close();
 
-            // Redirect after successful deletion
-            header("Location: view_product.php?deleted=1");
-            exit();
+        // Check if product exists
+        if (!$row) {
 
-        } else {
-            $message = "Failed to delete product.";
+            http_response_code(404);
+            $message = "Product not found.";
+
+        } elseif ($_SERVER["REQUEST_METHOD"] === "POST") {
+
+            // Validate CSRF token
+            $submittedToken = $_POST["csrf_token"] ?? "";
+            $sessionToken = $_SESSION["csrf_token"];
+
+            if (
+                !is_string($submittedToken) ||
+                !hash_equals($sessionToken, $submittedToken)
+            ) {
+
+                http_response_code(403);
+                $message = "Invalid request. Please try again.";
+
+            } else {
+
+                // Delete product using prepared statement
+                $deleteSql = "DELETE FROM products
+                              WHERE product_id = ?";
+
+                $deleteStmt = $conn->prepare($deleteSql);
+                $deleteStmt->bind_param("i", $productID);
+                $deleteStmt->execute();
+
+                $deletedRows = $deleteStmt->affected_rows;
+                $deleteStmt->close();
+
+                if ($deletedRows > 0) {
+
+                    // Redirect after successful deletion
+                    header("Location: view_product.php?deleted=1");
+                    exit();
+
+                } else {
+
+                    $message = "Product could not be deleted.";
+                }
+            }
         }
 
-        $stmt->close();
+    } catch (mysqli_sql_exception $e) {
+
+        // Log technical errors privately
+        error_log(
+            "Delete Product Error: " . $e->getMessage()
+        );
+
+        http_response_code(500);
+        $message = "Unable to process the request. Please try again later.";
+
+        // Prevent showing an actionable delete form
+        $row = null;
     }
 }
 
+// Close database connection
+$conn->close();
 ?>
 
 <!DOCTYPE html>
@@ -80,7 +131,9 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
     <title>Delete Product - OLMS</title>
+
     <link rel="stylesheet" href="../css/style.css">
 
     <style>
@@ -217,6 +270,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         }
 
         @media (max-width: 600px) {
+
             body {
                 padding: 15px;
             }
@@ -264,90 +318,134 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 
     <div class="delete-card">
 
-        <h3 class="warning-title">
-            Are you sure you want to delete this product?
-        </h3>
+        <?php if ($row): ?>
 
-        <p class="warning-text">
-            This action will permanently remove the product
-            from your inventory and cannot be undone.
-        </p>
+            <h3 class="warning-title">
+                Are you sure you want to delete this product?
+            </h3>
 
-        <?php if ($message != ""): ?>
-            <p class="error-message">
-                <strong><?= htmlspecialchars($message) ?></strong>
+            <p class="warning-text">
+                This action will permanently remove the product
+                from your inventory and cannot be undone.
             </p>
+
+        <?php else: ?>
+
+            <h3 class="warning-title">
+                Product Unavailable
+            </h3>
+
         <?php endif; ?>
 
-        <table class="product-info">
+        <!-- Error Message -->
+        <?php if ($message !== ""): ?>
 
-            <tr>
-                <th>Product ID</th>
-                <td>
+            <p class="error-message">
+                <strong>
                     <?= htmlspecialchars(
-                        (string) $row["product_id"]
+                        $message,
+                        ENT_QUOTES,
+                        "UTF-8"
                     ) ?>
-                </td>
-            </tr>
+                </strong>
+            </p>
 
-            <tr>
-                <th>Product Name</th>
-                <td>
-                    <?= htmlspecialchars($row["name"]) ?>
-                </td>
-            </tr>
+        <?php endif; ?>
 
-            <tr>
-                <th>Description</th>
-                <td>
-                    <?= htmlspecialchars($row["description"]) ?>
-                </td>
-            </tr>
+        <?php if ($row): ?>
 
-            <tr>
-                <th>Price (RM)</th>
-                <td>
-                    RM <?= number_format($row["price"], 2) ?>
-                </td>
-            </tr>
+            <!-- Product Information -->
+            <table class="product-info">
 
-            <tr>
-                <th>Expiry Date</th>
-                <td>
-                    <?= htmlspecialchars($row["expiry_date"]) ?>
-                </td>
-            </tr>
+                <tr>
+                    <th>Product ID</th>
+                    <td>
+                        <?= (int) $row["product_id"] ?>
+                    </td>
+                </tr>
 
-            <tr>
-                <th>Quantity</th>
-                <td>
-                    <?= htmlspecialchars(
-                        (string) $row["quantity"]
-                    ) ?>
-                </td>
-            </tr>
+                <tr>
+                    <th>Product Name</th>
+                    <td>
+                        <?= htmlspecialchars(
+                            $row["name"],
+                            ENT_QUOTES,
+                            "UTF-8"
+                        ) ?>
+                    </td>
+                </tr>
 
-        </table>
+                <tr>
+                    <th>Description</th>
+                    <td>
+                        <?= htmlspecialchars(
+                            $row["description"],
+                            ENT_QUOTES,
+                            "UTF-8"
+                        ) ?>
+                    </td>
+                </tr>
 
-        <form method="POST" class="delete-form">
+                <tr>
+                    <th>Price (RM)</th>
+                    <td>
+                        RM <?= number_format(
+                            (float) $row["price"],
+                            2
+                        ) ?>
+                    </td>
+                </tr>
 
-            <input
-                type="hidden"
-                name="csrf_token"
-                value="<?= htmlspecialchars(
-                    $_SESSION["csrf_token"]
-                ) ?>"
-            >
+                <tr>
+                    <th>Expiry Date</th>
+                    <td>
+                        <?= htmlspecialchars(
+                            $row["expiry_date"],
+                            ENT_QUOTES,
+                            "UTF-8"
+                        ) ?>
+                    </td>
+                </tr>
 
-            <button type="submit" class="delete-button">
-                Yes, Delete Product
-            </button>
+                <tr>
+                    <th>Quantity</th>
+                    <td>
+                        <?= (int) $row["quantity"] ?>
+                    </td>
+                </tr>
+
+            </table>
+
+            <!-- Delete Confirmation Form -->
+            <form method="POST" class="delete-form">
+
+                <input
+                    type="hidden"
+                    name="csrf_token"
+                    value="<?= htmlspecialchars(
+                        $_SESSION["csrf_token"],
+                        ENT_QUOTES,
+                        "UTF-8"
+                    ) ?>"
+                >
+
+                <button type="submit" class="delete-button">
+                    Yes, Delete Product
+                </button>
+
+                <a href="view_product.php" class="cancel-button">
+                    Cancel
+                </a>
+
+            </form>
+
+        <?php else: ?>
 
             <a href="view_product.php" class="cancel-button">
-                Cancel
+                Back to Products
             </a>
 
-        </form>
+        <?php endif; ?>
 
     </div>
 

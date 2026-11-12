@@ -1,15 +1,29 @@
 
 <?php
+// ============================================
+// OLMS Admin Logout
+// Secure administrator session termination
+// ============================================
+
 session_start();
 
+// Allow logout through POST requests only
 if ($_SERVER["REQUEST_METHOD"] !== "POST") {
     header("Location: admin_login.php");
     exit();
 }
 
+// Verify administrator is logged in
+if (!isset($_SESSION["admin_id"])) {
+    header("Location: admin_login.php");
+    exit();
+}
+
+// Retrieve CSRF tokens
 $token = $_POST["csrf_token"] ?? "";
 $sessionToken = $_SESSION["csrf_token"] ?? "";
 
+// Validate CSRF token
 if (
     !is_string($token) ||
     !is_string($sessionToken) ||
@@ -20,11 +34,12 @@ if (
     exit("Invalid logout request. Please return to the dashboard.");
 }
 
-// Clear all session variables.
+// Clear all session variables
 $_SESSION = [];
 
-// Expire the session cookie.
+// Expire the session cookie
 if (ini_get("session.use_cookies")) {
+
     $params = session_get_cookie_params();
 
     setcookie(session_name(), "", [
@@ -33,14 +48,14 @@ if (ini_get("session.use_cookies")) {
         "domain" => $params["domain"],
         "secure" => $params["secure"],
         "httponly" => $params["httponly"],
-        "samesite" => "Lax"
+        "samesite" => $params["samesite"] ?: "Lax"
     ]);
 }
 
-// Destroy the session.
+// Destroy administrator session
 session_destroy();
 
-
+// Redirect to OLMS homepage
 header("Location: ../index.php");
 exit();
 ?>
