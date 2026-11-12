@@ -223,3 +223,16 @@ Developed as a group project for CSEB5223 Software Construction, Universiti Tena
 ## Academic Purpose
 
 This project was developed for educational purposes as part of the Software Construction coursework.
+
+
+## Team Members
+
+- Muhammad Zahir Danish
+- Nurimaneesa
+- Nur Aina Aliah
+
+## Coding Standards
+
+The project follows defined naming conventions, consistent
+code formatting, and function/method modularity standards
+to improve readability and maintainability.
